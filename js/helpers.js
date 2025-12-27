@@ -149,7 +149,9 @@ function getSpawnPosition(parentID) {
     // Compute slope
     const slope = dy / dx;
     // Compute the new node position.
-    const dis = 300; // Distance from parent (keep equal to network.options.physics.springLength)
+    // SHORT SPAWN DISTANCE for explosive expansion
+    const dis = 50; 
+    
     relSpawnX = dis / Math.sqrt((slope ** 2) + 1);
     relSpawnY = relSpawnX * slope;
   }
