@@ -155,3 +155,25 @@ function getSpawnPosition(parentID) {
   }
   return [Math.round(relSpawnX + x), Math.round(relSpawnY + y)];
 }
+
+// Update the size (value) of a node based on its number of connections
+function updateNodeValue(nodeId) {
+  // Get all edges connected to this node
+  const connectedEdges = edges.get({
+    filter: e => e.from === nodeId || e.to === nodeId
+  });
+  // Update the value. Default to 1 if no edges.
+  // The value corresponds to the node's visual size based on the scaling options.
+  nodes.update({ id: nodeId, value: Math.max(1, connectedEdges.length) });
+}
+
+// Loading indicator controls
+function startLoading() {
+  const loader = document.getElementById('loading');
+  if (loader) loader.classList.remove('loading-hidden');
+}
+
+function stopLoading() {
+  const loader = document.getElementById('loading');
+  if (loader) loader.classList.add('loading-hidden');
+}
