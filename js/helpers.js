@@ -156,15 +156,21 @@ function getSpawnPosition(parentID) {
   return [Math.round(relSpawnX + x), Math.round(relSpawnY + y)];
 }
 
-// Update the size (value) of a node based on its number of connections
+// Update the size (value) AND MASS of a node based on its number of connections
 function updateNodeValue(nodeId) {
   // Get all edges connected to this node
   const connectedEdges = edges.get({
     filter: e => e.from === nodeId || e.to === nodeId
   });
-  // Update the value. Default to 1 if no edges.
-  // The value corresponds to the node's visual size based on the scaling options.
-  nodes.update({ id: nodeId, value: Math.max(1, connectedEdges.length) });
+  const degree = connectedEdges.length;
+
+  // Update the value (visual size) and mass (physical weight).
+  // Mass starts at 1 and increases by 0.5 for every connection.
+  nodes.update({ 
+    id: nodeId, 
+    value: Math.max(1, degree),
+    mass: 1 + (degree * 0.5) 
+  });
 }
 
 // Loading indicator controls
