@@ -50,15 +50,45 @@ function openPageForId(nodeId) {
   }
 }
 
+// NEW Helper: Open selected node, OR pick random, zoom, select, and open.
+function openActiveOrRandomNode() {
+  let targetNode = window.selectedNode || lastClickedNode;
+
+  // If no node is selected, pick a random one
+  if (!targetNode) {
+    const allIds = nodes.getIds();
+    if (allIds.length > 0) {
+      // Pick random ID
+      targetNode = allIds[Math.floor(Math.random() * allIds.length)];
+      
+      // Select it visually
+      lastClickedNode = targetNode;
+      traceBack(targetNode);
+      
+      // Zoom to it
+      network.focus(targetNode, {
+        scale: 1.0,
+        animation: {
+          duration: 1000,
+          easingFunction: "easeInOutQuad"
+        }
+      });
+    }
+  }
+
+  // Open the page (if we have a target now)
+  if (targetNode) {
+    openPageForId(targetNode);
+  }
+}
+
 // Event handler for 't' key press
 function keyOpenPageEvent(e) {
   // Ignore if typing in an input field
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
   if (e.key === 't' || e.key === 'T') {
-    // Open the currently selected node (or the last clicked one if blurred)
-    const nodeToOpen = window.selectedNode || lastClickedNode;
-    openPageForId(nodeToOpen);
+    openActiveOrRandomNode();
   }
 }
 
@@ -208,10 +238,7 @@ function bind() {
     openWikiButton.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation(); // Prevent click from bubbling
-      
-      // Use window.selectedNode or lastClickedNode to determine target
-      const nodeToOpen = window.selectedNode || lastClickedNode;
-      openPageForId(nodeToOpen);
+      openActiveOrRandomNode();
     });
   }
 }
