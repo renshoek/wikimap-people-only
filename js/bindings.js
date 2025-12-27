@@ -1,4 +1,4 @@
-/* global nodes, network, isTouchDevice, shepherd */
+/* global nodes, network, isTouchDevice, shepherd, updateNodeValue */
 /* global expandNode, traceBack, resetProperties, go, goRandom, clearNetwork, unwrap */
 // This script contains (most of) the code that binds actions to events.
 
@@ -53,11 +53,17 @@ function removeNodeEvent(params) {
       resetProperties();
     }
 
+    // Get neighbors before removing the node so we can update them later
+    const neighbors = network.getConnectedNodes(nodeId);
+
     nodes.remove(nodeId);
     // If we removed the node we were just about to expand, clear the state
     if (lastClickedNode === nodeId) {
       lastClickedNode = null;
     }
+
+    // Update the size of the neighbors because they lost a connection
+    neighbors.forEach(neighborId => updateNodeValue(neighborId));
   }
 }
 
@@ -124,11 +130,33 @@ function bind() {
       // This ensures functionality even if the node was blurred (deselected) by moving the mouse to the button.
       const nodeToRemove = window.selectedNode || lastClickedNode;
       if (nodeToRemove) {
+        // Get neighbors before removing
+        const neighbors = network.getConnectedNodes(nodeToRemove);
+
         // Reset properties BEFORE removing the node to avoid accessing a removed node in resetProperties
         resetProperties(); 
         nodes.remove(nodeToRemove);
         window.selectedNode = null;
         lastClickedNode = null;
+
+        // Update the size of the neighbors
+        neighbors.forEach(neighborId => updateNodeValue(neighborId));
+      }
+    });
+  }
+
+  // Bind Expand 3 Random Nodes button
+  const expandRandomButton = document.getElementById('expand-random');
+  if (expandRandomButton) {
+    expandRandomButton.addEventListener('click', () => {
+      const allIds = nodes.getIds();
+      if (allIds.length > 0) {
+        // Shuffle array using sort with random
+        const shuffled = allIds.sort(() => 0.5 - Math.random());
+        // Pick top 3
+        const selected = shuffled.slice(0, 3);
+        // Expand them
+        selected.forEach(id => expandNode(id));
       }
     });
   }
