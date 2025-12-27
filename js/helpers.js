@@ -149,7 +149,7 @@ function getSpawnPosition(parentID) {
     // Compute slope
     const slope = dy / dx;
     // Compute the new node position.
-    const dis = 200; // Distance from parent (keep equal to network.options.physics.springLength)
+    const dis = 300; // Distance from parent (keep equal to network.options.physics.springLength)
     relSpawnX = dis / Math.sqrt((slope ** 2) + 1);
     relSpawnY = relSpawnX * slope;
   }
