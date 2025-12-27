@@ -139,7 +139,17 @@ function getTraceBackNodes(node) {
     if (window.startpages.indexOf(currentNode) !== -1) { // Check if we've reached the end
       finished = true;
     }
-    currentNode = nodes.get(currentNode).parent; // Keep exploring with the node above.
+    
+    // SAFETY CHECK: Ensure the current node still exists in the graph.
+    // If a parent node was deleted, nodes.get(currentNode) might be null.
+    const nodeObj = nodes.get(currentNode);
+    if (!nodeObj) {
+      finished = true;
+      break;
+    }
+
+    currentNode = nodeObj.parent; // Keep exploring with the node above.
+    
     // Failsafe: avoid infinite loops in case something got messed up with parents in the graph
     if (iterations > 100) return [];
     iterations += 1;
@@ -176,11 +186,19 @@ function resetProperties() {
 
     // Reset ALL Edges (since we dimmed unrelated ones)
     const allEdges = edges.get();
-    const edgeUpdates = allEdges.map(e => ({
-      id: e.id,
-      width: 1,
-      color: getEdgeColor(nodes.get(e.to).level) // Restore original color
-    }));
+    const edgeUpdates = [];
+    allEdges.forEach(e => {
+      // SAFETY CHECK: Ensure the target node exists before accessing .level
+      // This prevents the "drag mode" freeze if an edge points to a deleted node.
+      const targetNode = nodes.get(e.to);
+      if (targetNode) {
+        edgeUpdates.push({
+          id: e.id,
+          width: 1,
+          color: getEdgeColor(targetNode.level) // Restore original color
+        });
+      }
+    });
     edges.update(edgeUpdates);
 
     window.tracenodes = [];
@@ -206,31 +224,37 @@ function traceBack(node) {
 
     // Update ALL Edges: Traceback, Neighbors, or Dimmed
     const allEdges = edges.get();
-    const edgeUpdates = allEdges.map(e => {
+    const edgeUpdates = [];
+    
+    allEdges.forEach(e => {
       const isTrace = window.traceedges.includes(e.id);
       const isConnected = connectedEdges.includes(e.id);
 
       if (isTrace) {
         // Traceback path: Yellow, Thick
-        return {
+        edgeUpdates.push({
           id: e.id,
           width: 5,
           color: { inherit: 'to' } // Inherits yellow from the target node
-        };
+        });
       } else if (isConnected) {
         // Immediate neighbor: Bold (Blue/Normal color)
-        return {
-          id: e.id,
-          width: 3, 
-          color: getEdgeColor(nodes.get(e.to).level) // Standard color, just bold
-        };
+        // SAFETY CHECK: Ensure target node exists
+        const targetNode = nodes.get(e.to);
+        if (targetNode) {
+          edgeUpdates.push({
+            id: e.id,
+            width: 3, 
+            color: getEdgeColor(targetNode.level) // Standard color, just bold
+          });
+        }
       } else {
         // Unrelated: Dimmed (Transparent Grey, 0.05 opacity)
-        return {
+        edgeUpdates.push({
           id: e.id,
           width: 1,
-          color: 'rgba(122, 206, 247, 0.4)' 
-        };
+          color: 'rgba(122, 206, 247, 0.4)'  
+        });
       }
     });
     edges.update(edgeUpdates);
