@@ -108,7 +108,7 @@ function bindNetwork() {
     });
   }
 
-  // CHANGED: Bind double-click to expandEvent instead of openPageEvent
+  // Bind double-click to expandEvent instead of openPageEvent
   network.on('doubleClick', expandEvent);
 
   // Bind right-click to remove node
@@ -122,7 +122,7 @@ function bind() {
   // Prevent default context menu to allow right-click to remove nodes
   document.addEventListener('contextmenu', e => e.preventDefault());
 
-  // CHANGED: Add key listener for 't' to open Wikipedia page
+  // Bind key listener for 't' to open Wikipedia page
   document.addEventListener('keydown', keyOpenPageEvent);
 
   // Bind actions for search component.
@@ -186,11 +186,21 @@ function bind() {
       if (allIds.length > 0) {
         // Shuffle array using sort with random
         const shuffled = allIds.sort(() => 0.5 - Math.random());
-        // Pick top 1 (CHANGED from 3 to 1)
+        // Pick top 1
         const selected = shuffled.slice(0, 1);
         // Expand them
         selected.forEach(id => expandNode(id));
       }
+    });
+  }
+
+  // NEW: Bind Open Wikipedia button
+  const openWikiButton = document.getElementById('open-wikipedia');
+  if (openWikiButton) {
+    openWikiButton.addEventListener('click', () => {
+      // Use window.selectedNode or lastClickedNode to determine target
+      const nodeToOpen = window.selectedNode || lastClickedNode;
+      openPageForId(nodeToOpen);
     });
   }
 }
