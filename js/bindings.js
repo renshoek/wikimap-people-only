@@ -28,18 +28,24 @@ function mobileTraceEvent(params) { // Trace back a node (with event handler)
   if (params.nodes.length) { // Was the click on a node?
     // The node clicked
     const page = params.nodes[0];
+    
+    // UPDATE: Keep lastClickedNode in sync on mobile too
+    lastClickedNode = page;
+    
     // Highlight in blue all nodes tracing back to central node
     traceBack(page);
   } else {
+    lastClickedNode = null;
     resetProperties();
   }
 }
 
 // Helper to open a page by ID
 function openPageForId(nodeId) {
-  if (nodeId) {
+  if (nodeId && nodes.get(nodeId)) {
     const page = encodeURIComponent(unwrap(nodes.get(nodeId).label));
-    const url = `http://en.wikipedia.org/wiki/${page}`;
+    // UPDATE: Use HTTPS to prevent mixed content errors
+    const url = `https://en.wikipedia.org/wiki/${page}`;
     window.open(url, '_blank');
   }
 }
@@ -158,7 +164,8 @@ function bind() {
   // Bind Remove Selected Node button (Mobile Friendly)
   const removeSelectedButton = document.getElementById('remove-selected');
   if (removeSelectedButton) {
-    removeSelectedButton.addEventListener('click', () => {
+    removeSelectedButton.addEventListener('click', (e) => {
+      e.stopPropagation(); // Stop click from bubbling to network
       // Use window.selectedNode (mobile/active hover) OR lastClickedNode (desktop selection)
       // This ensures functionality even if the node was blurred (deselected) by moving the mouse to the button.
       const nodeToRemove = window.selectedNode || lastClickedNode;
@@ -181,7 +188,8 @@ function bind() {
   // Bind Expand 1 Random Nodes button
   const expandRandomButton = document.getElementById('expand-random');
   if (expandRandomButton) {
-    expandRandomButton.addEventListener('click', () => {
+    expandRandomButton.addEventListener('click', (e) => {
+      e.stopPropagation();
       const allIds = nodes.getIds();
       if (allIds.length > 0) {
         // Shuffle array using sort with random
@@ -194,10 +202,13 @@ function bind() {
     });
   }
 
-  // NEW: Bind Open Wikipedia button
+  // Bind Open Wikipedia button
   const openWikiButton = document.getElementById('open-wikipedia');
   if (openWikiButton) {
-    openWikiButton.addEventListener('click', () => {
+    openWikiButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation(); // Prevent click from bubbling
+      
       // Use window.selectedNode or lastClickedNode to determine target
       const nodeToOpen = window.selectedNode || lastClickedNode;
       openPageForId(nodeToOpen);
