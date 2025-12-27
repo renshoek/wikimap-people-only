@@ -1,4 +1,4 @@
-/* global nodes, edges, getSpawnPosition, getNormalizedId, wordwrap, unwrap, getColor, getEdgeColor, getEdgeConnecting, getSubPages, colorNodes, edgesWidth */ // eslint-disable-line max-len
+/* global nodes, edges, getSpawnPosition, getNormalizedId, wordwrap, unwrap, getColor, getEdgeColor, getEdgeConnecting, getSubPages, colorNodes, edgesWidth, updateNodeValue, startLoading, stopLoading */ // eslint-disable-line max-len
 // This script contains the big functions that implement a lot of the core
 // functionality, like expanding nodes, and getting the nodes for a traceback.
 
@@ -97,14 +97,22 @@ function expandNodeCallback(page, data) {
   // Add the new components to the datasets for the graph
   nodes.add(subnodes);
   edges.add(newedges);
+
+  // Update sizes of connected nodes
+  updateNodeValue(page);
+  subpages.forEach(subpage => updateNodeValue(getNormalizedId(subpage)));
 }
 
 // Expand a node without freezing other stuff
 function expandNode(id) {
+  startLoading(); // Show loading icon
   const pagename = unwrap(nodes.get(id).label);
   getSubPages(pagename).then(({ redirectedTo, links }) => {
     const newId = renameNode(id, redirectedTo);
     expandNodeCallback(newId, links);
+    stopLoading(); // Hide loading icon
+  }).catch(() => {
+    stopLoading(); // Hide on error
   });
   // Mark the expanded node as 'locked' if it's one of the commafield items
   const cf = document.getElementById('input');
