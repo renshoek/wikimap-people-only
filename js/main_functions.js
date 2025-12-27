@@ -1,4 +1,4 @@
-/* global nodes, edges, getSpawnPosition, getNormalizedId, wordwrap, unwrap, getColor, getEdgeColor, getEdgeConnecting, getSubPages, colorNodes, edgesWidth, updateNodeValue, startLoading, stopLoading */ // eslint-disable-line max-len
+/* global nodes, edges, network, getSpawnPosition, getNormalizedId, wordwrap, unwrap, getColor, getEdgeColor, getEdgeConnecting, getSubPages, colorNodes, edgesWidth, updateNodeValue, startLoading, stopLoading */ // eslint-disable-line max-len
 // This script contains the big functions that implement a lot of the core
 // functionality, like expanding nodes, and getting the nodes for a traceback.
 
@@ -63,7 +63,7 @@ function expandNodeCallback(page, data) {
   // Add all children to network
   const subnodes = [];
   const newedges = [];
-  // Where new nodes should be spawned (now returns a point 40px away)
+  // Where new nodes should be spawned
   const [startX, startY] = getSpawnPosition(page);
   
   // Create node objects
@@ -73,7 +73,6 @@ function expandNodeCallback(page, data) {
     if (!nodes.getIds().includes(subpageID)) { // Don't add if node exists
       
       // Add a small random offset (jitter) to prevent nodes from stacking on top of each other
-      // which causes violent "explosions" in the physics engine.
       const angle = Math.random() * 2 * Math.PI;
       const radius = 5 + Math.random() * 10; // 5-15px jitter
       const spawnX = startX + radius * Math.cos(angle);
@@ -86,7 +85,7 @@ function expandNodeCallback(page, data) {
         level,
         color: getColor(level),
         parent: page,
-        x: spawnX, // Use jittered coordinates
+        x: spawnX,
         y: spawnY,
       });
     }
@@ -162,37 +161,94 @@ function getTraceBackEdges(tbnodes) {
 function resetProperties() {
   if (!window.isReset) {
     window.selectedNode = null;
-    // Reset node color
-    const modnodes = window.tracenodes.map(i => nodes.get(i));
-    colorNodes(modnodes, 0);
-    // Reset edge width and color
-    const modedges = window.traceedges.map((i) => {
-      const e = edges.get(i);
-      e.color = getEdgeColor(nodes.get(e.to).level);
-      return e;
-    });
-    edgesWidth(modedges, 1);
+
+    // Reset Trace Nodes (Color back to blue based on level)
+    const modnodes = window.tracenodes.map(i => nodes.get(i)).filter(n => n !== null);
+    if (modnodes.length > 0) colorNodes(modnodes, 0);
+
+    // Reset ALL Nodes Text Opacity
+    const allNodes = nodes.get();
+    const nodeUpdates = allNodes.map(n => ({
+      id: n.id,
+      font: { color: 'rgba(0, 0, 0, 1)' } // Restore to full black/dark
+    }));
+    nodes.update(nodeUpdates);
+
+    // Reset ALL Edges (since we dimmed unrelated ones)
+    const allEdges = edges.get();
+    const edgeUpdates = allEdges.map(e => ({
+      id: e.id,
+      width: 1,
+      color: getEdgeColor(nodes.get(e.to).level) // Restore original color
+    }));
+    edges.update(edgeUpdates);
+
     window.tracenodes = [];
     window.traceedges = [];
+    window.isReset = true;
   }
 }
 
 // Highlight the path from a given node back to the central node.
 function traceBack(node) {
   if (node !== window.selectedNode) {
-    resetProperties();
+    resetProperties(); // Reset previous highlights/dimming
     window.selectedNode = node;
+    window.isReset = false; // Mark state as modified
+
+    // Calculate Traceback (Yellow Path)
     window.tracenodes = getTraceBackNodes(node);
     window.traceedges = getTraceBackEdges(window.tracenodes);
-    // Color nodes yellow
+
+    // Identify Immediate Connections
+    const connectedEdges = network.getConnectedEdges(node);
+    const connectedNodes = network.getConnectedNodes(node);
+
+    // Update ALL Edges: Traceback, Neighbors, or Dimmed
+    const allEdges = edges.get();
+    const edgeUpdates = allEdges.map(e => {
+      const isTrace = window.traceedges.includes(e.id);
+      const isConnected = connectedEdges.includes(e.id);
+
+      if (isTrace) {
+        // Traceback path: Yellow, Thick
+        return {
+          id: e.id,
+          width: 5,
+          color: { inherit: 'to' } // Inherits yellow from the target node
+        };
+      } else if (isConnected) {
+        // Immediate neighbor: Bold (Blue/Normal color)
+        return {
+          id: e.id,
+          width: 3, 
+          color: getEdgeColor(nodes.get(e.to).level) // Standard color, just bold
+        };
+      } else {
+        // Unrelated: Dimmed (Transparent Grey, 0.05 opacity)
+        return {
+          id: e.id,
+          width: 1,
+          color: 'rgba(122, 206, 247, 0.4)' 
+        };
+      }
+    });
+    edges.update(edgeUpdates);
+
+    // Update ALL Nodes: Active ones opaque, others dimmed text
+    const allNodeIds = nodes.getIds();
+    const nodeUpdates = allNodeIds.map(id => {
+      // Active if: Selected, Traceback, or Neighbor
+      const isActive = (id === node) || window.tracenodes.includes(id) || connectedNodes.includes(id);
+      return {
+        id: id,
+        font: { color: isActive ? 'rgba(0, 0, 0, 1)' : 'rgba(0, 0, 0, 0.3)' }
+      };
+    });
+    nodes.update(nodeUpdates);
+
+    // Color trace nodes yellow
     const modnodes = window.tracenodes.map(i => nodes.get(i));
     colorNodes(modnodes, 1);
-    // Widen edges
-    const modedges = window.traceedges.map((i) => {
-      const e = edges.get(i);
-      e.color = { inherit: 'to' };
-      return e;
-    });
-    edgesWidth(modedges, 5);
   }
 }
