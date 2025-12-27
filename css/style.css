@@ -85,3 +85,30 @@ a:hover {
   left: 0;
   z-index: 0;
 }
+
+/* == LOADING ICON == */
+#loading {
+  position: fixed;
+  bottom: 15px;
+  right: 60px; /* Positioned to the left of the button group */
+  z-index: 100;
+  font-size: 30px;
+  color: #333;
+  pointer-events: none;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.loading-hidden {
+  opacity: 0;
+}
+
+/* Spinning animation for the loading icon */
+#loading .icon.ion-load-c {
+  display: block;
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
