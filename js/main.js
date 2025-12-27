@@ -1,4 +1,4 @@
-/* global vis, bindNetwork, getNormalizedId, wordwrap, getColor, noInputDetected, getItems, addItem, clearItems, unlockAll, fetchPageTitle, getRandomArticle, networkFromJson */ // eslint-disable-line max-len
+/* global vis, bindNetwork, getNormalizedId, wordwrap, getColor, noInputDetected, getItems, addItem, clearItems, unlockAll, fetchPageTitle, getRandomArticle, networkFromJson, startLoading, stopLoading */ // eslint-disable-line max-len
 // This script contains the code that creates the central network, as well as
 // a function for resetting it to a brand new page.
 
@@ -17,8 +17,8 @@ const options = {
   nodes: {
     shape: 'dot',
     scaling: {
-      min: 20,
-      max: 30,
+      min: 10, // Smaller minimum for isolated/leaf nodes
+      max: 60, // Larger maximum for highly connected nodes
       label: { min: 14, max: 30, drawThreshold: 9, maxVisible: 20 },
     },
     font: { size: 14, face: getComputedStyle(document.body).fontFamily },
@@ -29,10 +29,15 @@ const options = {
     selectConnectedEdges: true,
   },
   physics: {
+    // Speed adjustments
+    maxVelocity: 65,   // Allow nodes to move faster (default 50)
+    timestep: 0.6,     // Faster simulation speed (default 0.5)
+    adaptiveTimestep: true,
     barnesHut: {
       gravitationalConstant: -2000,
-      springConstant: 0.02, // Lower value = looser springs
-      springLength: 300,    // Longer value = longer edges
+      springConstant: 0.02, // Keep loose springs
+      springLength: 300,    // Keep long edges
+      damping: 0.08,        // Reduce drag to make movement snappier (default 0.09)
     },
     stabilization: {
       iterations: 2500,
@@ -113,6 +118,7 @@ function go() {
     return;
   }
 
+  startLoading();
   Promise.all(inputs.map(fetchPageTitle))
     .then((pageTitles) => {
       // Record on the commafield item which node the input corresponds to
@@ -121,7 +127,9 @@ function go() {
       });
       // Make the network‘s start pages the pages from the inputs
       setStartPages(pageTitles);
-    });
+      stopLoading();
+    })
+    .catch(() => stopLoading());
 
   // Show 'clear' button
   document.getElementById('clear').style.display = '';
@@ -131,10 +139,12 @@ function go() {
 // Reset the network with one or more random pages.
 function goRandom() {
   const cf = document.getElementsByClassName('commafield')[0];
+  startLoading();
   getRandomArticle().then((ra) => {
+    stopLoading();
     addItem(cf, decodeURIComponent(ra));
-    go();
-  });
+    go(); // go() triggers its own loading indicator
+  }).catch(() => stopLoading());
 }
 
 // Reset the network with content from a JSON string
