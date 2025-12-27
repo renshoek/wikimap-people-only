@@ -75,7 +75,17 @@ function bindNetwork() {
   } else { // Device does not have touchscreen
     network.on('click', expandEvent); // Expand on click
     network.on('hoverNode', params => traceBack(params.node)); // Highlight traceback on hover
-    network.on('blurNode', resetProperties); // un-traceback on un-hover
+    
+    // CHANGED: Logic to persist selection on blur
+    network.on('blurNode', () => {
+      if (lastClickedNode) {
+        // If a node is currently selected (clicked), revert highlight to it
+        traceBack(lastClickedNode);
+      } else {
+        // Otherwise reset to normal
+        resetProperties();
+      }
+    });
   }
 
   // Bind double-click to open page
@@ -145,7 +155,7 @@ function bind() {
     });
   }
 
-  // Bind Expand 3 Random Nodes button
+  // Bind Expand 1 Random Nodes button
   const expandRandomButton = document.getElementById('expand-random');
   if (expandRandomButton) {
     expandRandomButton.addEventListener('click', () => {
@@ -153,8 +163,8 @@ function bind() {
       if (allIds.length > 0) {
         // Shuffle array using sort with random
         const shuffled = allIds.sort(() => 0.5 - Math.random());
-        // Pick top 3
-        const selected = shuffled.slice(0, 3);
+        // Pick top 1 (CHANGED from 3 to 1)
+        const selected = shuffled.slice(0, 1);
         // Expand them
         selected.forEach(id => expandNode(id));
       }
