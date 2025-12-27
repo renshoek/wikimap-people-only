@@ -36,8 +36,8 @@ const options = {
     barnesHut: {
       gravitationalConstant: -3500, // Stronger repulsion for a bigger "pop" (was -2000)
       springConstant: 0.03,         // Stiffer springs to snap into place (was 0.02)
-      springLength: 300,            // Resting length
-      damping: 0.4,                 // Heavy friction to stop immediately (was 0.08)
+      springLength: 700,            // Resting length
+      damping: 0.9,                 // Heavy friction to stop immediately (was 0.08)
     },
     stabilization: {
       iterations: 2500,
