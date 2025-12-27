@@ -28,6 +28,16 @@ const options = {
     hoverConnectedEdges: false,
     selectConnectedEdges: true,
   },
+  physics: {
+    barnesHut: {
+      gravitationalConstant: -2000,
+      springConstant: 0.02, // Lower value = looser springs
+      springLength: 300,    // Longer value = longer edges
+    },
+    stabilization: {
+      iterations: 2500,
+    },
+  },
 };
 
 nodes = new vis.DataSet();
