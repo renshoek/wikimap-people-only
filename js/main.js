@@ -31,11 +31,11 @@ const options = {
   physics: {
     // Speed adjustments for faster movement
     maxVelocity: 120,  
-    timestep: 0.75,    
+    timestep: 1,    
     adaptiveTimestep: true,
     barnesHut: {
       gravitationalConstant: -3500, 
-      springConstant: 0.03,         
+      springConstant: 0.05,         
       springLength: 700,            
       damping: 0.9,                 
     },
