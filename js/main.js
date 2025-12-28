@@ -17,8 +17,8 @@ const options = {
   nodes: {
     shape: 'dot',
     scaling: {
-      min: 10, // Smaller minimum for isolated/leaf nodes
-      max: 60, // Larger maximum for highly connected nodes
+      min: 5, // Smaller minimum for isolated/leaf nodes
+      max: 75, // Larger maximum for highly connected nodes
       label: { min: 14, max: 30, drawThreshold: 9, maxVisible: 20 },
     },
     font: { size: 14, face: getComputedStyle(document.body).fontFamily },
@@ -31,11 +31,11 @@ const options = {
   physics: {
     // Speed adjustments for faster movement
     maxVelocity: 120,  // Much higher speed limit (was 65)
-    timestep: 0.75,    // Faster simulation steps (was 0.6)
+    timestep: 1,    // Faster simulation steps (was 0.6)
     adaptiveTimestep: true,
     barnesHut: {
       gravitationalConstant: -3500, // Stronger repulsion for a bigger "pop" (was -2000)
-      springConstant: 0.03,         // Stiffer springs to snap into place (was 0.02)
+      springConstant: 0.05,         // Stiffer springs to snap into place (was 0.02)
       springLength: 700,            // Resting length
       damping: 0.9,                 // Heavy friction to stop immediately (was 0.08)
     },
