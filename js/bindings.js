@@ -100,11 +100,8 @@ function openActiveOrRandomNode() {
     // CASE 1: A node is already selected -> Just Open it (No Zoom)
     openPageForId(targetNode);
   } else {
-    // CASE 2: No selection -> Pick Random, Select, Open (No Zoom)
-    const randId = selectRandomNode();
-    if (randId) {
-      openPageForId(randId);
-    }
+    // CASE 2: No selection -> Pick Random and Select it (Don't open yet)
+    selectRandomNode();
   }
 }
 
