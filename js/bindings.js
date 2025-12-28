@@ -50,7 +50,7 @@ function openPageForId(nodeId) {
   }
 }
 
-// NEW Helper: Zoom to a specific node
+// Helper: Zoom to a specific node (Used by the Find button)
 function zoomToNode(nodeId) {
   network.focus(nodeId, {
     scale: 1.0,
@@ -61,7 +61,7 @@ function zoomToNode(nodeId) {
   });
 }
 
-// Helper: Pick Random, Select it, Zoom to it (Do NOT open/expand)
+// Helper: Pick Random, Select it, Zoom to it
 function selectAndZoomRandomNode() {
   const allIds = nodes.getIds();
   if (allIds.length > 0) {
@@ -79,18 +79,32 @@ function selectAndZoomRandomNode() {
   }
 }
 
-// NEW Helper: Open selected node, OR pick random, zoom, select.
+// NEW Helper: Pick Random and Select it (BUT DO NOT ZOOM)
+function selectRandomNode() {
+  const allIds = nodes.getIds();
+  if (allIds.length > 0) {
+    const randomNodeId = allIds[Math.floor(Math.random() * allIds.length)];
+    lastClickedNode = randomNodeId;
+    traceBack(randomNodeId);
+    return randomNodeId;
+  }
+  return null;
+}
+
+// NEW Helper: Open selected node, OR pick random (No Zoom)
 function openActiveOrRandomNode() {
   // Check if we currently have a selection
   const targetNode = window.selectedNode || lastClickedNode;
 
   if (targetNode) {
-    // CASE 1: A node is already selected -> Zoom to it AND Open it
-    zoomToNode(targetNode);
+    // CASE 1: A node is already selected -> Just Open it (No Zoom)
     openPageForId(targetNode);
   } else {
-    // CASE 2: No selection -> Pick Random, Zoom, Select (Do NOT open yet)
-    selectAndZoomRandomNode();
+    // CASE 2: No selection -> Pick Random, Select, Open (No Zoom)
+    const randId = selectRandomNode();
+    if (randId) {
+      openPageForId(randId);
+    }
   }
 }
 
@@ -254,15 +268,21 @@ function bind() {
   }
 
   // Bind Zoom & Select Random Node button
+  // MODIFIED: Zoom to active node if exists, else select/zoom random
   const zoomRandomButton = document.getElementById('zoom-select-random');
   if (zoomRandomButton) {
     zoomRandomButton.addEventListener('click', (e) => {
       e.stopPropagation();
-      selectAndZoomRandomNode();
+      const targetNode = window.selectedNode || lastClickedNode;
+      if (targetNode) {
+        zoomToNode(targetNode);
+      } else {
+        selectAndZoomRandomNode();
+      }
     });
   }
 
-  // Bind Expand Button (Modified: Expands Selected if available, else Zoom/Select Random)
+  // Bind Expand Button (Modified: NO ZOOM)
   const expandRandomButton = document.getElementById('expand-random');
   if (expandRandomButton) {
     expandRandomButton.addEventListener('click', (e) => {
@@ -272,18 +292,16 @@ function bind() {
       const targetNode = window.selectedNode || lastClickedNode;
 
       if (targetNode) {
-        // OPTION A: Expand the selected node
-        // ADDED: Zoom to the node being expanded
-        zoomToNode(targetNode);
+        // OPTION A: Expand the selected node (NO ZOOM)
         expandNode(targetNode);
       } else {
-        // OPTION B: No selection -> Select and Zoom a random node (BUT DO NOT EXPAND)
-        selectAndZoomRandomNode();
+        // OPTION B: No selection -> Select random node (BUT DO NOT EXPAND, NO ZOOM)
+        selectRandomNode();
       }
     });
   }
 
-  // Bind Open Wikipedia button
+  // Bind Open Wikipedia button (Modified: NO ZOOM)
   const openWikiButton = document.getElementById('open-wikipedia');
   if (openWikiButton) {
     openWikiButton.addEventListener('click', (e) => {
