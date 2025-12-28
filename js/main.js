@@ -17,8 +17,8 @@ const options = {
   nodes: {
     shape: 'dot',
     scaling: {
-      min: 5, // Smaller minimum for isolated/leaf nodes
-      max: 75, // Larger maximum for highly connected nodes
+      min: 5, 
+      max: 75,
       label: { min: 14, max: 30, drawThreshold: 9, maxVisible: 20 },
     },
     font: { size: 14, face: getComputedStyle(document.body).fontFamily },
@@ -30,14 +30,14 @@ const options = {
   },
   physics: {
     // Speed adjustments for faster movement
-    maxVelocity: 120,  // Much higher speed limit (was 65)
-    timestep: 1,    // Faster simulation steps (was 0.6)
+    maxVelocity: 120,  
+    timestep: 0.75,    
     adaptiveTimestep: true,
     barnesHut: {
-      gravitationalConstant: -3500, // Stronger repulsion for a bigger "pop" (was -2000)
-      springConstant: 0.05,         // Stiffer springs to snap into place (was 0.02)
-      springLength: 700,            // Resting length
-      damping: 0.9,                 // Heavy friction to stop immediately (was 0.08)
+      gravitationalConstant: -3500, 
+      springConstant: 0.03,         
+      springLength: 700,            
+      damping: 0.9,                 
     },
     stabilization: {
       iterations: 2500,
@@ -81,17 +81,34 @@ const getStartNode = pageName => ({
 });
 
 // Reset everything to its initial state
+// UPDATED: Now completely destroys the network to clear cache/memory
 function clearNetwork() {
+  // 1. Destroy existing network instance if it exists
+  if (initialized && network) {
+    network.destroy();
+    network = null;
+  }
+  
+  // 2. Reset DataSets
   window.startpages = [];
   window.tracenodes = [];
   window.traceedges = [];
   nodes = new vis.DataSet();
   edges = new vis.DataSet();
   data = { nodes, edges };
-  network.setData(data);
+  
+  // 3. Re-initialize network
+  initialized = false;
+  makeNetwork();
 
+  // 4. Reset Inputs
   const cf = document.getElementById('input');
   unlockAll(cf);
+  clearItems(cf);
+
+  // 5. Reset Suggestions (Remove greyed out state)
+  const suggestions = document.querySelectorAll('.suggestion-item');
+  suggestions.forEach(el => el.classList.remove('disabled'));
 }
 
 // Add and remove "start nodes" to make the list of start nodes match the list passed
