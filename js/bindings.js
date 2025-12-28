@@ -50,6 +50,17 @@ function openPageForId(nodeId) {
   }
 }
 
+// NEW Helper: Zoom to a specific node
+function zoomToNode(nodeId) {
+  network.focus(nodeId, {
+    scale: 1.0,
+    animation: {
+      duration: 1000,
+      easingFunction: "easeInOutQuad"
+    }
+  });
+}
+
 // Helper: Pick Random, Select it, Zoom to it (Do NOT open/expand)
 function selectAndZoomRandomNode() {
   const allIds = nodes.getIds();
@@ -64,13 +75,7 @@ function selectAndZoomRandomNode() {
     traceBack(randomNodeId);
     
     // Zoom camera to it
-    network.focus(randomNodeId, {
-      scale: 1.0,
-      animation: {
-        duration: 1000,
-        easingFunction: "easeInOutQuad"
-      }
-    });
+    zoomToNode(randomNodeId);
   }
 }
 
@@ -80,7 +85,8 @@ function openActiveOrRandomNode() {
   const targetNode = window.selectedNode || lastClickedNode;
 
   if (targetNode) {
-    // CASE 1: A node is already selected -> Open it
+    // CASE 1: A node is already selected -> Zoom to it AND Open it
+    zoomToNode(targetNode);
     openPageForId(targetNode);
   } else {
     // CASE 2: No selection -> Pick Random, Zoom, Select (Do NOT open yet)
@@ -267,6 +273,8 @@ function bind() {
 
       if (targetNode) {
         // OPTION A: Expand the selected node
+        // ADDED: Zoom to the node being expanded
+        zoomToNode(targetNode);
         expandNode(targetNode);
       } else {
         // OPTION B: No selection -> Select and Zoom a random node (BUT DO NOT EXPAND)
