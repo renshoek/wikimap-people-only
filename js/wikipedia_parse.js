@@ -140,14 +140,29 @@ function getSubPages(pageName) {
   const isPeopleMode = peopleModeCheckbox && peopleModeCheckbox.checked;
 
   if (isPeopleMode) {
-    // MODE: ON - Full page, filter for people
-    return getPageHtml(pageName, null).then(async ({ document: doc, redirectedTo }) => {
-      // Look at the main content
-      const content = doc.querySelector('.mw-parser-output') || doc.body;
-      const rawLinks = getWikiLinks(content);
-      const links = await filterPeople(rawLinks);
-      return { redirectedTo, links };
-    });
+    // MODE: ON - Full page, filter for people.
+    // OPTIMIZATION: We use the API to get links directly (prop=links) instead of 
+    // parsing the entire HTML text. This solves memory/truncation issues on mobile.
+    return queryApi({ action: 'parse', page: pageName, prop: 'links', redirects: 1 })
+      .then(async (res) => {
+        const redirectedTo = res.parse.redirects && res.parse.redirects[0] ? res.parse.redirects[0].to : pageName;
+        
+        // Extract titles from API response
+        // The API returns an array of objects: { ns: 0, title: "Name", ... }
+        // We only want ns: 0 (Main Article Namespace)
+        const rawLinks = res.parse.links
+          .filter(item => item.ns === 0)
+          .map(item => item['*']);
+
+        const links = await filterPeople(rawLinks);
+        return { redirectedTo, links };
+      })
+      .catch((err) => {
+        console.error('Error fetching full page links:', err);
+        // Fallback or empty return on error
+        return { redirectedTo: pageName, links: [] };
+      });
+
   } else {
     // MODE: OFF - First paragraph only, no filter (Original behavior)
     return getPageHtml(pageName, 0).then(({ document: doc, redirectedTo }) => {
